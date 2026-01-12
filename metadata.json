@@ -1,0 +1,7 @@
+{
+  "name": "Ponto Certo - Gestão de Jornada",
+  "description": "Sistema avançado de controle de ponto eletrônico e gestão de jornada.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
