@@ -8,8 +8,8 @@ import { DashboardView } from './pages/system/DashboardView';
 import { TimeTrackingView } from './pages/system/TimeTrackingView';
 import { MyRecordsView } from './pages/system/MyRecordsView';
 import { TimeMirrorView } from './pages/system/TimeMirrorView';
-import { LocationsView } from './pages/system/LocationsView';
 import { EmployeesView } from './pages/system/EmployeesView';
+import { DepartmentsView } from './pages/system/DepartmentsView'; // New
 import { ReportsView } from './pages/system/ReportsView';
 import { SettingsView } from './pages/system/SettingsView';
 import { MaintenanceAgentView } from './pages/system/MaintenanceAgentView';
@@ -25,7 +25,6 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [section, setSection] = useState<SystemSection>(SystemSection.TIME_TRACKING);
 
-  // Verifica se existe uma sessão salva ao carregar o app (Local ou Session)
   useEffect(() => {
     const savedUserLocal = localStorage.getItem(STORAGE_KEY);
     const savedUserSession = sessionStorage.getItem(STORAGE_KEY);
@@ -56,7 +55,6 @@ const App: React.FC = () => {
     setAppState('LOGIN');
   };
 
-  // Se não estiver autenticado, obriga o Login
   if (appState === 'LOGIN') {
     return (
       <LoginView 
@@ -65,7 +63,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Layout do Sistema Autenticado
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] font-sans">
       <Sidebar 
@@ -83,7 +80,7 @@ const App: React.FC = () => {
           {section === SystemSection.TIME_TRACKING && <TimeTrackingView />}
           {section === SystemSection.MY_RECORDS && <MyRecordsView />}
           {section === SystemSection.TIME_MIRROR && <TimeMirrorView />}
-          {section === SystemSection.LOCATIONS && <LocationsView />}
+          {section === SystemSection.DEPARTMENTS && <DepartmentsView />}
           {section === SystemSection.EMPLOYEES && <EmployeesView />}
           {section === SystemSection.ACCESS_MANAGEMENT && <AccessManagementView />}
           {section === SystemSection.REPORTS && <ReportsView />}

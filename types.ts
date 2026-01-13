@@ -4,7 +4,7 @@ export enum SystemSection {
   TIME_TRACKING = 'TIME_TRACKING',
   MY_RECORDS = 'MY_RECORDS',
   TIME_MIRROR = 'TIME_MIRROR',
-  LOCATIONS = 'LOCATIONS',
+  DEPARTMENTS = 'DEPARTMENTS',
   EMPLOYEES = 'EMPLOYEES',
   REPORTS = 'REPORTS',
   SETTINGS = 'SETTINGS',
@@ -24,6 +24,26 @@ export interface User {
   lastLogin?: string;
 }
 
+export interface TimeLog {
+  id: string;
+  userId: string;
+  type: string;
+  time: string;
+  date: string;
+  reason?: string;
+  status: 'success' | 'warning' | 'error';
+  location: string;
+  method: string;
+}
+
+export interface Department {
+  id: string;
+  name: string;
+  manager: string;
+  employeeCount: number;
+  employeeIds: string[]; // IDs dos colaboradores vinculados
+}
+
 export interface NavItem {
   label: string;
   path: string;
@@ -39,11 +59,4 @@ export interface Agent {
   razaoSocial: string;
   nomeFantasia: string;
   email: string;
-}
-
-export interface TimeLog {
-  id: string;
-  type: 'entrada' | 'pausa' | 'retorno' | 'saida';
-  timestamp: Date;
-  location?: string;
 }

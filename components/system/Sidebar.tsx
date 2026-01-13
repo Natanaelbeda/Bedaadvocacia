@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Home, Users, Clock, FileText, Lock, Building, Layers, ShieldCheck, MapPin, Key } from 'lucide-react';
+import { Home, Users, Clock, FileText, Lock, Building, Layers, ShieldCheck, MapPin, Key, Briefcase } from 'lucide-react';
 import { PontoCertoLogo } from '../../constants';
 import { SystemSection, User } from '../../types';
 
@@ -24,13 +24,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSectionChang
       items: [
         { label: 'Meus Registros', section: SystemSection.MY_RECORDS, icon: FileText },
         { label: 'Espelho de Ponto', section: SystemSection.TIME_MIRROR, icon: Layers },
-        { label: 'Localizações', section: SystemSection.LOCATIONS, icon: MapPin },
       ]
     },
     {
       title: 'Administração',
       items: [
         { label: 'Colaboradores', section: SystemSection.EMPLOYEES, icon: Users },
+        { label: 'Departamentos', section: SystemSection.DEPARTMENTS, icon: Briefcase },
         { label: 'Controle de Acessos', section: SystemSection.ACCESS_MANAGEMENT, icon: Key },
         { label: 'Relatórios Gerenciais', section: SystemSection.REPORTS, icon: ShieldCheck },
         { label: 'Configurações', section: SystemSection.SETTINGS, icon: Lock },
