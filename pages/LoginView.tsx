@@ -1,17 +1,17 @@
 
 import React, { useState } from 'react';
 import { PontoCertoLogo, StylizedB } from '../constants';
-import { Lock, Mail, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, Loader2, Check } from 'lucide-react';
 import { User } from '../types';
 
 interface LoginViewProps {
-  onLoginSuccess: (user: User) => void;
-  onBack: () => void;
+  onLoginSuccess: (user: User, rememberMe: boolean) => void;
 }
 
-export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onBack }) => {
+export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +20,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onBack }) 
     setError('');
     setLoading(true);
 
-    // Simulação de banco de dados e delay de rede
+    // Simulação de delay para autenticação
     setTimeout(() => {
       const mockUsers: User[] = [
         { id: '1', name: 'Natanael Beda', email: 'natanael@beda.com', role: 'Administrador' },
@@ -31,7 +31,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onBack }) 
       const user = mockUsers.find(u => u.email === email.toLowerCase());
 
       if (user && password === '123456') {
-        onLoginSuccess(user);
+        onLoginSuccess(user, rememberMe);
       } else {
         setError('E-mail ou senha incorretos. Tente "natanael@beda.com" e senha "123456"');
         setLoading(false);
@@ -41,7 +41,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onBack }) 
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#1E3A5F] p-4 relative overflow-hidden">
-      {/* Background Decor */}
+      {/* Background Decorativo com o 'B' estilizado */}
       <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
         <StylizedB className="absolute -top-20 -left-20 w-[600px] h-[600px]" withBackground />
         <StylizedB className="absolute -bottom-20 -right-20 w-[600px] h-[600px]" withBackground />
@@ -53,11 +53,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onBack }) 
             <div className="flex justify-center mb-6">
               <StylizedB className="h-16" color="#1E3A5F" />
             </div>
-            <h2 className="text-2xl font-bold text-[#1E3A5F]">Bem-vindo de volta!</h2>
-            <p className="text-gray-400 text-sm mt-1">Acesse sua conta para gerenciar sua jornada.</p>
+            <h2 className="text-2xl font-bold text-[#1E3A5F]">Ponto Certo</h2>
+            <p className="text-gray-400 text-sm mt-1">Identifique-se para acessar seu painel.</p>
           </div>
 
-          <form onSubmit={handleLogin} className="px-10 pb-10 space-y-5">
+          <form onSubmit={handleLogin} className="px-10 pb-12 space-y-5">
             {error && (
               <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs font-bold flex items-center gap-3 border border-red-100 animate-shake">
                 <AlertCircle size={18} />
@@ -98,6 +98,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onBack }) 
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
                 </div>
               </div>
+
+              <div className="flex items-center gap-3 py-2 cursor-pointer group" onClick={() => setRememberMe(!rememberMe)}>
+                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${rememberMe ? 'bg-[#1E3A5F] border-[#1E3A5F]' : 'border-gray-200 group-hover:border-[#C4A661]'}`}>
+                  {rememberMe && <Check size={14} className="text-white" />}
+                </div>
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider select-none">Permanecer conectado</span>
+              </div>
             </div>
 
             <button 
@@ -109,24 +116,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onBack }) 
                 <Loader2 className="animate-spin" size={20} />
               ) : (
                 <>
-                  ENTRAR NO SISTEMA
+                  ACESSAR SISTEMA
                   <ArrowRight size={18} className="text-[#C4A661]" />
                 </>
               )}
-            </button>
-            
-            <button 
-              type="button"
-              onClick={onBack}
-              className="w-full text-gray-400 text-xs font-bold uppercase tracking-widest py-2 hover:text-[#1E3A5F] transition-colors"
-            >
-              Voltar para o site
             </button>
           </form>
         </div>
         
         <p className="text-center mt-8 text-white/40 text-[10px] font-bold uppercase tracking-widest">
-          Protegido por Ponto Certo Security Protocol
+          Sistema de Gestão de Jornada v2.5
         </p>
       </div>
     </div>

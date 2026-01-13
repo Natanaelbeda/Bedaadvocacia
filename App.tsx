@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { SystemSection, User } from './types';
 import { Sidebar } from './components/system/Sidebar';
 import { Header } from './components/system/Header';
-import { LandingPage } from './pages/LandingPage';
 import { LoginView } from './pages/LoginView';
 import { DashboardView } from './pages/system/DashboardView';
 import { TimeTrackingView } from './pages/system/TimeTrackingView';
@@ -14,51 +13,59 @@ import { EmployeesView } from './pages/system/EmployeesView';
 import { ReportsView } from './pages/system/ReportsView';
 import { SettingsView } from './pages/system/SettingsView';
 import { MaintenanceAgentView } from './pages/system/MaintenanceAgentView';
+import { AccessManagementView } from './pages/system/AccessManagementView';
 import { WhatsAppButton } from './components/common/WhatsAppButton';
 
-type AppState = 'LANDING' | 'LOGIN' | 'AUTHENTICATED';
+type AppState = 'LOGIN' | 'AUTHENTICATED';
+
+const STORAGE_KEY = 'pc_user';
 
 const App: React.FC = () => {
-  const [appState, setAppState] = useState<AppState>('LANDING');
+  const [appState, setAppState] = useState<AppState>('LOGIN');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [section, setSection] = useState<SystemSection>(SystemSection.TIME_TRACKING);
 
-  // Se o usuário já tiver logado antes (simulação de sessão persistente)
+  // Verifica se existe uma sessão salva ao carregar o app (Local ou Session)
   useEffect(() => {
-    const savedUser = localStorage.getItem('pc_user');
+    const savedUserLocal = localStorage.getItem(STORAGE_KEY);
+    const savedUserSession = sessionStorage.getItem(STORAGE_KEY);
+    const savedUser = savedUserLocal || savedUserSession;
+
     if (savedUser) {
       setCurrentUser(JSON.parse(savedUser));
       setAppState('AUTHENTICATED');
     }
   }, []);
 
-  const handleLoginSuccess = (user: User) => {
+  const handleLoginSuccess = (user: User, rememberMe: boolean) => {
     setCurrentUser(user);
     setAppState('AUTHENTICATED');
-    localStorage.setItem('pc_user', JSON.stringify(user));
+    
+    const userStr = JSON.stringify(user);
+    if (rememberMe) {
+      localStorage.setItem(STORAGE_KEY, userStr);
+    } else {
+      sessionStorage.setItem(STORAGE_KEY, userStr);
+    }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('pc_user');
+    localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
     setCurrentUser(null);
-    setAppState('LANDING');
+    setAppState('LOGIN');
   };
 
-  // Renderização condicional baseada no estado de autenticação
-  if (appState === 'LANDING') {
-    return <LandingPage onLogin={() => setAppState('LOGIN')} />;
-  }
-
+  // Se não estiver autenticado, obriga o Login
   if (appState === 'LOGIN') {
     return (
       <LoginView 
         onLoginSuccess={handleLoginSuccess} 
-        onBack={() => setAppState('LANDING')} 
       />
     );
   }
 
-  // Se autenticado, mostra o sistema principal
+  // Layout do Sistema Autenticado
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] font-sans">
       <Sidebar 
@@ -78,6 +85,7 @@ const App: React.FC = () => {
           {section === SystemSection.TIME_MIRROR && <TimeMirrorView />}
           {section === SystemSection.LOCATIONS && <LocationsView />}
           {section === SystemSection.EMPLOYEES && <EmployeesView />}
+          {section === SystemSection.ACCESS_MANAGEMENT && <AccessManagementView />}
           {section === SystemSection.REPORTS && <ReportsView />}
           {section === SystemSection.SETTINGS && <SettingsView />}
           {section === SystemSection.MAINTENANCE_AGENT && <MaintenanceAgentView />}

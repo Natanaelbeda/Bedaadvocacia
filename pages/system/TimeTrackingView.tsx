@@ -7,8 +7,11 @@ interface Log {
   id: string;
   type: string;
   time: string;
+  date: string;
   reason?: string;
   status: 'success' | 'warning' | 'error';
+  location: string;
+  method: string;
 }
 
 const STOP_REASONS = [
@@ -18,24 +21,49 @@ const STOP_REASONS = [
   { id: 'fim', label: 'Fim de Expediente', icon: <LogOut size={20} /> },
 ];
 
+const STORAGE_KEY = 'pc_time_logs_v1';
+
 export const TimeTrackingView: React.FC = () => {
   const [time, setTime] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [logs, setLogs] = useState<Log[]>([
-    { id: '1', type: 'Entrada', time: '08:02', status: 'success' },
-    { id: '2', type: 'Saída', time: '12:05', reason: 'Almoço', status: 'success' },
-    { id: '3', type: 'Retorno', time: '13:10', status: 'success' },
-  ]);
+  
+  // Inicializa os logs a partir do localStorage
+  const [logs, setLogs] = useState<Log[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  });
 
-  // Simulação de status baseado no último log
+  // Salva no localStorage sempre que os logs mudarem
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+  }, [logs]);
+
+  // Atualiza o relógio
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Simulação de status baseado no último log do dia atual
   const currentStatus = useMemo(() => {
-    if (logs.length === 0) return 'OFFLINE';
-    const lastLog = logs[logs.length - 1];
+    const today = new Date().toLocaleDateString('pt-BR');
+    const todayLogs = logs.filter(l => l.date === today);
     
-    // Se o último registro foi uma entrada ou retorno, ele está trabalhando
+    if (todayLogs.length === 0) return 'OFFLINE';
+    
+    // Pegamos o último registro (que é o mais recente no tempo)
+    // Os logs são salvos em ordem de criação, então o último é o atual.
+    const lastLog = todayLogs[todayLogs.length - 1];
+    
     if (lastLog.type === 'Entrada' || lastLog.type === 'Retorno') return 'WORKING';
     
-    // Se foi uma saída, mas não foi "Fim de Expediente", ele está em intervalo
     if (lastLog.type === 'Saída') {
       if (lastLog.reason === 'Fim de Expediente') return 'FINISHED';
       return 'BREAK';
@@ -43,11 +71,6 @@ export const TimeTrackingView: React.FC = () => {
     
     return 'OFFLINE';
   }, [logs]);
-
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const handleAction = () => {
     if (currentStatus === 'WORKING') {
@@ -60,23 +83,29 @@ export const TimeTrackingView: React.FC = () => {
   const recordPoint = (mode: 'start' | 'stop', reason?: string) => {
     const now = new Date();
     const formattedTime = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const formattedDate = now.toLocaleDateString('pt-BR');
+    
+    const todayLogs = logs.filter(l => l.date === formattedDate);
     
     let type = '';
     if (mode === 'start') {
-      type = logs.length === 0 ? 'Entrada' : 'Retorno';
+      type = todayLogs.length === 0 ? 'Entrada' : 'Retorno';
     } else {
       type = 'Saída';
     }
 
     const newLog: Log = {
-      id: Math.random().toString(),
+      id: Math.random().toString(36).substr(2, 9),
       type,
       time: formattedTime,
+      date: formattedDate,
       reason: reason,
-      status: 'success'
+      status: 'success',
+      location: 'Goiânia, GO',
+      method: 'GPS'
     };
     
-    setLogs([...logs, newLog]);
+    setLogs(prev => [...prev, newLog]);
     setIsModalOpen(false);
   };
 
@@ -89,20 +118,20 @@ export const TimeTrackingView: React.FC = () => {
       case 'FINISHED':
         return { label: 'EXPEDIENTE ENCERRADO', color: 'bg-gray-500', icon: <Moon size={14} />, text: 'Até amanhã!' };
       default:
-        return { label: 'DE FOLGA', color: 'bg-blue-400', icon: <Calendar size={14} />, text: 'Hoje é seu dia de descanso.' };
+        return { label: 'AGUARDANDO', color: 'bg-blue-400', icon: <Calendar size={14} />, text: 'Pronto para iniciar o dia?' };
     }
   };
 
   const status = getStatusConfig();
+  const today = time.toLocaleDateString('pt-BR');
+  const todayLogs = logs.filter(l => l.date === today).slice().reverse();
 
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-8 animate-fadeIn relative pb-20">
-      {/* Background Watermark */}
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.02] pointer-events-none z-0">
         <StylizedB className="w-[600px] h-[600px]" withBackground={true} />
       </div>
 
-      {/* Justification Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#1E3A5F]/60 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-scaleIn">
@@ -145,7 +174,7 @@ export const TimeTrackingView: React.FC = () => {
         <div className={`px-4 py-2 rounded-xl flex items-center gap-3 border shadow-sm ${currentStatus === 'OFFLINE' ? 'bg-blue-50 border-blue-100' : 'bg-white border-gray-100'}`}>
           <div className={`w-3 h-3 rounded-full ${currentStatus === 'OFFLINE' ? 'bg-blue-400' : 'bg-green-500 animate-pulse'}`}></div>
           <span className="text-sm font-bold text-[#1E3A5F]">
-            {currentStatus === 'OFFLINE' ? 'DIA DE FOLGA' : 'DIA DE TRABALHO'}
+            {currentStatus === 'FINISHED' ? 'EXPEDIENTE CONCLUÍDO' : 'DIA DE TRABALHO'}
           </span>
         </div>
       </div>
@@ -169,19 +198,22 @@ export const TimeTrackingView: React.FC = () => {
 
             <button 
               onClick={handleAction}
+              disabled={currentStatus === 'FINISHED'}
               className={`w-72 h-72 rounded-full flex flex-col items-center justify-center text-white shadow-2xl transition-all duration-300 group relative
                 ${currentStatus === 'WORKING' 
-                  ? 'bg-gradient-to-br from-orange-500 to-red-600 border-[12px] border-orange-100'
+                  ? 'bg-gradient-to-br from-orange-500 to-red-600 border-[12px] border-orange-100 active:scale-95'
+                  : currentStatus === 'FINISHED'
+                  ? 'bg-gray-400 border-[12px] border-gray-100 cursor-not-allowed opacity-80'
                   : 'bg-gradient-to-br from-[#1E3A5F] to-[#2A4A6F] border-[12px] border-[#C4A661]/10 hover:scale-105 active:scale-95'
                 }`}
             >
-              <div className="absolute inset-0 rounded-full bg-current opacity-5 animate-ping"></div>
+              {currentStatus !== 'FINISHED' && <div className="absolute inset-0 rounded-full bg-current opacity-5 animate-ping"></div>}
               <Clock size={80} className={`mb-4 ${currentStatus === 'WORKING' ? 'animate-pulse' : ''}`} />
               <span className="text-xl font-black uppercase tracking-[0.2em]">
-                {currentStatus === 'WORKING' ? 'Pausar/Sair' : 'Iniciar'}
+                {currentStatus === 'WORKING' ? 'Pausar/Sair' : currentStatus === 'FINISHED' ? 'Concluído' : 'Iniciar'}
               </span>
               <p className="text-[10px] mt-2 opacity-60 font-bold uppercase tracking-widest">
-                {currentStatus === 'WORKING' ? 'Justificar Saída' : 'Registrar Ponto'}
+                {currentStatus === 'WORKING' ? 'Justificar Saída' : currentStatus === 'FINISHED' ? 'Bom descanso' : 'Registrar Ponto'}
               </p>
             </button>
 
@@ -201,7 +233,7 @@ export const TimeTrackingView: React.FC = () => {
               <h3 className="text-[#C4A661] text-[10px] font-bold tracking-[0.2em] uppercase">Resumo da Jornada</h3>
               <div className="flex justify-between items-end">
                 <div>
-                  <p className="text-3xl font-bold">06:15h</p>
+                  <p className="text-3xl font-bold">{currentStatus === 'OFFLINE' ? '00:00h' : 'Calculando...'}</p>
                   <p className="text-xs text-white/50">Trabalhadas hoje</p>
                 </div>
                 <div className="text-right">
@@ -210,7 +242,7 @@ export const TimeTrackingView: React.FC = () => {
                 </div>
               </div>
               <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                <div className="bg-[#C4A661] h-full transition-all duration-1000" style={{ width: '78%' }}></div>
+                <div className="bg-[#C4A661] h-full transition-all duration-1000" style={{ width: currentStatus === 'FINISHED' ? '100%' : '5%' }}></div>
               </div>
             </div>
             <div className="absolute -bottom-6 -right-6 opacity-10">
@@ -228,7 +260,7 @@ export const TimeTrackingView: React.FC = () => {
               <div className="absolute left-[35px] top-8 bottom-8 w-[2px] bg-gray-100"></div>
               
               <div className="space-y-8">
-                {logs.length > 0 ? logs.slice().reverse().map((log, idx) => (
+                {todayLogs.length > 0 ? todayLogs.map((log) => (
                   <div key={log.id} className="relative flex items-center gap-6 group">
                     <div className="w-12 text-right">
                       <p className="text-sm font-bold text-[#1E3A5F]">{log.time}</p>
@@ -282,7 +314,7 @@ export const TimeTrackingView: React.FC = () => {
           </div>
           <div>
             <h4 className="font-bold text-[#1E3A5F]">Avisos e Pendências</h4>
-            <p className="text-sm text-gray-500">Mantenha seus registros atualizados para evitar inconsistências no fechamento do mês.</p>
+            <p className="text-sm text-gray-500">Seus registros são salvos automaticamente no dispositivo para sua segurança.</p>
           </div>
         </div>
       </div>

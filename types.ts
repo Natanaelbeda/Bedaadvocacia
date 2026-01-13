@@ -10,7 +10,8 @@ export enum SystemSection {
   SETTINGS = 'SETTINGS',
   MAINTENANCE_AGENT = 'MAINTENANCE_AGENT',
   MAINTENANCE_COMPANY = 'MAINTENANCE_COMPANY',
-  CADASTRO_ADJUSTMENTS = 'CADASTRO_ADJUSTMENTS'
+  CADASTRO_ADJUSTMENTS = 'CADASTRO_ADJUSTMENTS',
+  ACCESS_MANAGEMENT = 'ACCESS_MANAGEMENT'
 }
 
 export interface User {
@@ -19,6 +20,8 @@ export interface User {
   email: string;
   role: 'Administrador' | 'Gestor' | 'Colaborador';
   avatar?: string;
+  status?: 'Ativo' | 'Inativo';
+  lastLogin?: string;
 }
 
 export interface NavItem {

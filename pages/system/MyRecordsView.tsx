@@ -1,7 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Calendar, Filter, Download, FileText, ChevronLeft, ChevronRight, MapPin, Clock } from 'lucide-react';
-import { StylizedB } from '../../constants';
 
 interface DetailedLog {
   id: string;
@@ -13,17 +12,23 @@ interface DetailedLog {
   method: 'GPS' | 'Manual' | 'Fixo';
 }
 
+const STORAGE_KEY = 'pc_time_logs_v1';
+
 export const MyRecordsView: React.FC = () => {
-  const [logs] = useState<DetailedLog[]>([
-    { id: '1', date: '12/01/2026', time: '08:02', type: 'Entrada', location: 'Goiânia, GO', method: 'GPS' },
-    { id: '2', date: '12/01/2026', time: '12:05', type: 'Saída', reason: 'Almoço', location: 'Goiânia, GO', method: 'GPS' },
-    { id: '3', date: '12/01/2026', time: '13:10', type: 'Retorno', location: 'Goiânia, GO', method: 'GPS' },
-    // Fix: Removed duplicate 'date' property from line 21
-    { id: '4', date: '11/01/2026', time: '18:15', type: 'Saída', reason: 'Fim de Expediente', location: 'Goiânia, GO', method: 'GPS' },
-    { id: '5', date: '11/01/2026', time: '13:05', type: 'Retorno', location: 'Goiânia, GO', method: 'GPS' },
-    { id: '6', date: '11/01/2026', time: '12:00', type: 'Saída', reason: 'Almoço', location: 'Goiânia, GO', method: 'GPS' },
-    { id: '7', date: '11/01/2026', time: '07:58', type: 'Entrada', location: 'Goiânia, GO', method: 'GPS' },
-  ]);
+  const [logs, setLogs] = useState<DetailedLog[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Inverte para mostrar os mais recentes primeiro
+        setLogs(parsed.slice().reverse());
+      } catch (e) {
+        setLogs([]);
+      }
+    }
+  }, []);
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6 animate-fadeIn">
@@ -45,17 +50,16 @@ export const MyRecordsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Filters Summary */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-gray-400 uppercase">Período Selecionado</span>
-            <span className="text-sm font-bold text-[#1E3A5F]">01/01/2026 - 31/01/2026</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase">Registros Totais</span>
+            <span className="text-sm font-bold text-[#1E3A5F]">{logs.length} Batidas</span>
           </div>
           <div className="h-8 w-[1px] bg-gray-100"></div>
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-gray-400 uppercase">Total de Horas</span>
-            <span className="text-sm font-bold text-green-600">84:12hs</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase">Status do Sistema</span>
+            <span className="text-sm font-bold text-green-600 italic">Sincronizado Localmente</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -70,7 +74,6 @@ export const MyRecordsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Records Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -85,7 +88,7 @@ export const MyRecordsView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {logs.map((log) => (
+              {logs.length > 0 ? logs.map((log) => (
                 <tr key={log.id} className="hover:bg-blue-50/30 transition-colors group">
                   <td className="px-6 py-4 font-medium text-gray-700">{log.date}</td>
                   <td className="px-6 py-4">
@@ -115,38 +118,40 @@ export const MyRecordsView: React.FC = () => {
                     </span>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan={6} className="px-6 py-20 text-center text-gray-400">
+                    Nenhum registro encontrado no dispositivo.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination */}
         <div className="p-4 border-t border-gray-100 flex justify-between items-center bg-gray-50/50">
-          <span className="text-xs text-gray-400 font-medium">Mostrando 7 de 154 registros</span>
+          <span className="text-xs text-gray-400 font-medium">Mostrando {logs.length} registros</span>
           <div className="flex items-center gap-2">
             <button className="p-2 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-30" disabled>
               <ChevronLeft size={18} />
             </button>
             <div className="flex items-center gap-1">
               <button className="w-8 h-8 rounded-lg bg-[#1E3A5F] text-white text-xs font-bold">1</button>
-              <button className="w-8 h-8 rounded-lg hover:bg-gray-200 text-xs font-bold text-gray-600">2</button>
-              <button className="w-8 h-8 rounded-lg hover:bg-gray-200 text-xs font-bold text-gray-600">3</button>
             </div>
-            <button className="p-2 rounded-lg hover:bg-gray-200 transition-colors">
+            <button className="p-2 rounded-lg hover:bg-gray-200 transition-colors" disabled>
               <ChevronRight size={18} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Help Section */}
       <div className="bg-blue-50 border border-blue-100 p-6 rounded-2xl flex items-start gap-4">
         <div className="bg-blue-500 text-white p-3 rounded-xl shadow-lg shadow-blue-500/20">
           <FileText size={24} />
         </div>
         <div>
-          <h4 className="font-bold text-[#1E3A5F]">Precisa ajustar algum registro?</h4>
-          <p className="text-sm text-[#1E3A5F]/70 mt-1">Caso tenha esquecido de bater o ponto ou tenha feito algum registro incorreto, você pode solicitar um ajuste de ponto através da aba "Solicitar Ajuste" no menu principal.</p>
+          <h4 className="font-bold text-[#1E3A5F]">Dados Armazenados com Sucesso</h4>
+          <p className="text-sm text-[#1E3A5F]/70 mt-1">Seus registros de ponto ficam guardados de forma definitiva no navegador deste computador. Em breve, os dados serão sincronizados automaticamente com o servidor central.</p>
         </div>
       </div>
     </div>
